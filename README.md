@@ -1,84 +1,42 @@
 # 📚 Student Record Management System
 
-A console-based application written in **C** to manage student records efficiently using **file handling** and **CRUD operations**.
-
----
+A web-based student record management system built with **HTML, CSS, and JavaScript**.
 
 ## ✨ Features
 
-- ➕ **Add** new student records
-- 📋 **Display** all student records in a table
-- 🔍 **Search** student by ID
-- ✏️ **Update** student details
+- ➕ **Add** student records (ID, Name, Branch, Year, CGPA)
+- 📋 **View** all students in a clean table
+- ✏️ **Edit** student details
 - 🗑️ **Delete** student record
-- 💾 **File Handling** — data is saved permanently in a `.dat` file
-- 🖥️ Clean menu-driven console UI
+- 🔍 **Search** by name or ID (live search)
+- 📊 **Stats** — Total students, Average CGPA, Top CGPA
+- 💾 Data saved in **localStorage** (no server needed)
+- 🎨 Color-coded CGPA (green ≥ 8, yellow ≥ 6, red < 6)
 
----
+## 🚀 How to Run
 
-## 🖼️ Preview
+1. Clone or download this repo
+2. Open `index.html` in your browser
+3. That's it — no server needed!
 
-```
-  ╔══════════════════════════════════════════╗
-  ║    STUDENT RECORD MANAGEMENT SYSTEM      ║
-  ║        Built in C by Mohammed Shakib     ║
-  ╚══════════════════════════════════════════╝
+## 🔗 Live Demo
 
-  ┌─────────────────────────────┐
-  │         MAIN MENU           │
-  ├─────────────────────────────┤
-  │  1. Add Student             │
-  │  2. Display All Students    │
-  │  3. Search Student by ID    │
-  │  4. Update Student          │
-  │  5. Delete Student          │
-  │  6. Exit                    │
-  └─────────────────────────────┘
-```
+👉 [**Live Demo**](https://mohammedshakib-645.github.io/student-record-system/)
 
----
-
-## 🛠️ How to Run
-
-### Requirements
-- GCC compiler (or any C compiler)
-- Windows / Linux / Mac terminal
-
-### Steps
-
-```bash
-# Clone the repo
-git clone https://github.com/MohammedShakib-645/student-record-system.git
-
-# Go into the folder
-cd student-record-system
-
-# Compile
-gcc main.c -o student_system
-
-# Run
-./student_system         # Linux/Mac
-student_system.exe       # Windows
-```
-
----
-
-## 📁 Project Structure
+## 📁 Files
 
 ```
 student-record-system/
-├── main.c          → Full source code (add, display, search, update, delete)
-└── README.md       → Project documentation
+├── index.html   → Structure
+├── style.css    → Dark theme styling
+└── script.js    → CRUD logic with localStorage
 ```
 
----
+## 🛠️ Built With
 
-## 📌 What I Learned
-
-- File handling in C (`fread`, `fwrite`, `fseek`)
-- Structs and pointers
-- Menu-driven programming
-- CRUD operations logic
+- HTML
+- CSS
+- JavaScript (Vanilla)
 
 ---
 
