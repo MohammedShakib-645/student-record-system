@@ -1,160 +1,219 @@
-// All students stored in localStorage
+// Students array - saved in localStorage
 let students = JSON.parse(localStorage.getItem("students")) || [];
 let isEditing = false;
 
-// Save to localStorage
-function saveToStorage() {
-  localStorage.setItem("students", JSON.stringify(students));
+// ── Navigation ──────────────────────────────────────────────────────
+function showSection(name) {
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+
+  document.getElementById("section-" + name).classList.add("active");
+
+  const titles = { dashboard: "Dashboard", students: "All Students", add: "Add Student" };
+  document.getElementById("pageTitle").textContent = titles[name];
+
+  const navMap = { dashboard: 0, students: 1, add: 2 };
+  document.querySelectorAll(".nav-item")[navMap[name]].classList.add("active");
+
+  if (name === "dashboard") renderDashboard();
+  if (name === "students")  renderTable(students);
 }
 
-// Add or Update student
+// ── Save / Update Student ────────────────────────────────────────────
 function saveStudent() {
-  const id     = parseInt(document.getElementById("studentId").value);
-  const name   = document.getElementById("studentName").value.trim();
-  const branch = document.getElementById("studentBranch").value.trim();
-  const year   = parseInt(document.getElementById("studentYear").value);
-  const cgpa   = parseFloat(document.getElementById("studentCgpa").value);
+  const id     = parseInt(document.getElementById("sId").value);
+  const name   = document.getElementById("sName").value.trim();
+  const branch = document.getElementById("sBranch").value;
+  const year   = parseInt(document.getElementById("sYear").value);
+  const cgpa   = parseFloat(document.getElementById("sCgpa").value);
+  const email  = document.getElementById("sEmail").value.trim();
   const editId = document.getElementById("editId").value;
 
-  // Basic validation
   if (!id || !name || !branch || !year || isNaN(cgpa)) {
-    alert("Please fill in all fields correctly.");
+    showToast("Please fill in all required fields.", "error");
     return;
   }
   if (cgpa < 0 || cgpa > 10) {
-    alert("CGPA must be between 0 and 10.");
-    return;
-  }
-  if (year < 1 || year > 4) {
-    alert("Year must be between 1 and 4.");
+    showToast("CGPA must be between 0 and 10.", "error");
     return;
   }
 
   if (isEditing) {
-    // Update existing
     const index = students.findIndex(s => s.id == editId);
-    students[index] = { id, name, branch, year, cgpa };
+    students[index] = { id, name, branch, year, cgpa, email };
+    showToast("Student updated successfully!", "success");
     isEditing = false;
-    document.getElementById("formTitle").textContent = "Add Student";
-    document.getElementById("studentId").disabled = false;
   } else {
-    // Check if ID already exists
     if (students.find(s => s.id === id)) {
-      alert("Student with this ID already exists!");
+      showToast("Student ID already exists!", "error");
       return;
     }
-    students.push({ id, name, branch, year, cgpa });
+    students.push({ id, name, branch, year, cgpa, email });
+    showToast("Student added successfully!", "success");
   }
 
-  saveToStorage();
-  renderTable(students);
+  localStorage.setItem("students", JSON.stringify(students));
   clearForm();
+  showSection("students");
 }
 
-// Render the table
-function renderTable(list) {
-  const tbody = document.getElementById("studentTable");
-  const noRecords = document.getElementById("noRecords");
-
-  tbody.innerHTML = "";
-
-  if (list.length === 0) {
-    noRecords.style.display = "block";
-  } else {
-    noRecords.style.display = "none";
-  }
-
-  list.forEach(s => {
-    // Color code the CGPA
-    let cgpaClass = "cgpa-low";
-    if (s.cgpa >= 8) cgpaClass = "cgpa-high";
-    else if (s.cgpa >= 6) cgpaClass = "cgpa-mid";
-
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${s.id}</td>
-      <td>${s.name}</td>
-      <td>${s.branch}</td>
-      <td>Year ${s.year}</td>
-      <td class="${cgpaClass}">${s.cgpa.toFixed(2)}</td>
-      <td>
-        <button class="btn-edit" onclick="editStudent(${s.id})">Edit</button>
-        <button class="btn-delete" onclick="deleteStudent(${s.id})">Delete</button>
-      </td>
-    `;
-    tbody.appendChild(row);
-  });
-
-  updateStats();
-}
-
-// Edit a student
+// ── Edit Student ─────────────────────────────────────────────────────
 function editStudent(id) {
   const s = students.find(s => s.id === id);
   if (!s) return;
 
-  document.getElementById("studentId").value = s.id;
-  document.getElementById("studentName").value = s.name;
-  document.getElementById("studentBranch").value = s.branch;
-  document.getElementById("studentYear").value = s.year;
-  document.getElementById("studentCgpa").value = s.cgpa;
+  document.getElementById("sId").value    = s.id;
+  document.getElementById("sName").value  = s.name;
+  document.getElementById("sBranch").value= s.branch;
+  document.getElementById("sYear").value  = s.year;
+  document.getElementById("sCgpa").value  = s.cgpa;
+  document.getElementById("sEmail").value = s.email || "";
   document.getElementById("editId").value = s.id;
-  document.getElementById("studentId").disabled = true;
-  document.getElementById("formTitle").textContent = "Edit Student";
-  document.querySelector(".btn-add").textContent = "Update Student";
+  document.getElementById("sId").disabled = true;
+
+  document.getElementById("formHeading").innerHTML = '<i class="fas fa-user-edit"></i> Edit Student';
+  document.getElementById("saveBtnText").textContent = "Update Student";
 
   isEditing = true;
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  showSection("add");
 }
 
-// Delete a student
+// ── Delete Student ────────────────────────────────────────────────────
 function deleteStudent(id) {
-  if (!confirm("Are you sure you want to delete this student?")) return;
+  if (!confirm("Delete this student? This cannot be undone.")) return;
   students = students.filter(s => s.id !== id);
-  saveToStorage();
+  localStorage.setItem("students", JSON.stringify(students));
   renderTable(students);
+  renderDashboard();
+  showToast("Student deleted.", "success");
 }
 
-// Search by name or ID
-function searchStudents() {
-  const query = document.getElementById("searchBox").value.toLowerCase();
+// ── Render Table ──────────────────────────────────────────────────────
+function renderTable(list) {
+  const tbody = document.getElementById("studentTable");
+  const empty = document.getElementById("tableEmpty");
+
+  tbody.innerHTML = "";
+
+  if (list.length === 0) {
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+
+  list.forEach(s => {
+    const initials = s.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+    const cgpaClass = s.cgpa >= 8 ? "cgpa-high" : s.cgpa >= 6 ? "cgpa-mid" : "cgpa-low";
+    const statusClass = s.cgpa >= 8 ? "status-good" : s.cgpa >= 6 ? "status-avg" : "status-at-risk";
+    const statusText  = s.cgpa >= 8 ? "Good Standing" : s.cgpa >= 6 ? "Average" : "At Risk";
+
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td><span style="color:#64748b;font-size:0.8rem">#${s.id}</span></td>
+      <td>
+        <div class="td-student">
+          <div class="td-avatar">${initials}</div>
+          <div>
+            <div style="font-weight:500">${s.name}</div>
+            <div style="font-size:0.75rem;color:#64748b">${s.email || "—"}</div>
+          </div>
+        </div>
+      </td>
+      <td>${s.branch}</td>
+      <td>Year ${s.year}</td>
+      <td><span class="cgpa-badge ${cgpaClass}">${s.cgpa.toFixed(2)}</span></td>
+      <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+      <td>
+        <div class="action-btns">
+          <button class="btn-icon" onclick="editStudent(${s.id})" title="Edit">
+            <i class="fas fa-pen"></i>
+          </button>
+          <button class="btn-icon del" onclick="deleteStudent(${s.id})" title="Delete">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+// ── Render Dashboard ──────────────────────────────────────────────────
+function renderDashboard() {
+  const total = students.length;
+  const avg   = total ? (students.reduce((s, st) => s + st.cgpa, 0) / total) : 0;
+  const top   = total ? Math.max(...students.map(s => s.cgpa)) : 0;
+  const low   = students.filter(s => s.cgpa < 6).length;
+
+  document.getElementById("stat-total").textContent = total;
+  document.getElementById("stat-avg").textContent   = avg.toFixed(2);
+  document.getElementById("stat-top").textContent   = top.toFixed(2);
+  document.getElementById("stat-low").textContent   = low;
+
+  // Recent 6 students
+  const recentList = document.getElementById("recentList");
+  const dashEmpty  = document.getElementById("dashEmpty");
+  recentList.innerHTML = "";
+
+  if (students.length === 0) {
+    dashEmpty.style.display = "block";
+    return;
+  }
+  dashEmpty.style.display = "none";
+
+  const recent = [...students].slice(-6).reverse();
+  recent.forEach(s => {
+    const initials = s.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+    const cgpaClass = s.cgpa >= 8 ? "cgpa-high" : s.cgpa >= 6 ? "cgpa-mid" : "cgpa-low";
+
+    const card = document.createElement("div");
+    card.className = "s-card";
+    card.innerHTML = `
+      <div class="s-card-top">
+        <div class="s-avatar">${initials}</div>
+        <div>
+          <div class="s-name">${s.name}</div>
+          <div class="s-branch">${s.branch}</div>
+        </div>
+      </div>
+      <div class="s-card-bottom">
+        <span class="s-year">Year ${s.year}</span>
+        <span class="cgpa-badge ${cgpaClass}">${s.cgpa.toFixed(2)}</span>
+      </div>
+    `;
+    recentList.appendChild(card);
+  });
+}
+
+// ── Live Search ───────────────────────────────────────────────────────
+function liveSearch() {
+  const q = document.getElementById("globalSearch").value.toLowerCase();
   const filtered = students.filter(s =>
-    s.name.toLowerCase().includes(query) ||
-    String(s.id).includes(query)
+    s.name.toLowerCase().includes(q) || String(s.id).includes(q) || s.branch.toLowerCase().includes(q)
   );
+  showSection("students");
   renderTable(filtered);
 }
 
-// Clear the form
+// ── Clear Form ────────────────────────────────────────────────────────
 function clearForm() {
-  document.getElementById("studentId").value = "";
-  document.getElementById("studentName").value = "";
-  document.getElementById("studentBranch").value = "";
-  document.getElementById("studentYear").value = "";
-  document.getElementById("studentCgpa").value = "";
-  document.getElementById("editId").value = "";
-  document.getElementById("studentId").disabled = false;
-  document.getElementById("formTitle").textContent = "Add Student";
-  document.querySelector(".btn-add").textContent = "Add Student";
+  ["sId","sName","sEmail","sCgpa"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("sBranch").value = "";
+  document.getElementById("sYear").value   = "";
+  document.getElementById("editId").value  = "";
+  document.getElementById("sId").disabled  = false;
+  document.getElementById("formHeading").innerHTML = '<i class="fas fa-user-plus"></i> Add New Student';
+  document.getElementById("saveBtnText").textContent = "Save Student";
   isEditing = false;
 }
 
-// Update stats cards
-function updateStats() {
-  document.getElementById("totalCount").textContent = students.length;
-
-  if (students.length === 0) {
-    document.getElementById("avgCgpa").textContent = "0.00";
-    document.getElementById("topCgpa").textContent = "0.00";
-    return;
-  }
-
-  const avg = students.reduce((sum, s) => sum + s.cgpa, 0) / students.length;
-  const top = Math.max(...students.map(s => s.cgpa));
-
-  document.getElementById("avgCgpa").textContent = avg.toFixed(2);
-  document.getElementById("topCgpa").textContent = top.toFixed(2);
+// ── Toast ─────────────────────────────────────────────────────────────
+function showToast(msg, type = "success") {
+  const toast = document.getElementById("toast");
+  toast.textContent = msg;
+  toast.className = "toast " + type + " show";
+  setTimeout(() => { toast.classList.remove("show"); }, 3000);
 }
 
-// Load on page start
-renderTable(students);
+// ── Init ──────────────────────────────────────────────────────────────
+renderDashboard();
